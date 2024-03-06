@@ -23,9 +23,8 @@ void task1()
       Serial.print("Bienvenido agente de Disedentes del tiempo, listo para armar la bomba de emision?\n");
       Serial.print("En este momento la bomba tiene 5 segundos de duracion, pulsa S para subir el tiempo o B para bajarlo");
       Serial.print("Cuando quiera armar la bomba presione la L de listo\n");
-    task1State = Task1States:: CONFIG;
-
-    break;
+      task1State = Task1States:: CONFIG;
+       break;
     }
 
     case Task1States::CONFIG:{
@@ -44,8 +43,7 @@ void task1()
           Serial.print(" Segundos\n");
           Serial.print("LA CONFIGURACION DE LA BOMBA ESTA LISTA, PASANDO A MODO DE INTENTAR CLAVES...\n");
           task1State = Task1States::TRY;
- 
-
+          break;
           }
 
         if (TimeToExplode == 1){
@@ -55,7 +53,7 @@ void task1()
           Serial.print(" Segundo\n");
           Serial.print("LA CONFIGURACION DE LA BOMBA ESTA LISTA, PASANDO A MODO DE INTENTAR CLAVES...\n");
           task1State = Task1States::TRY; 
-          
+          break;
           }
 
         switch (UserInput){
@@ -80,36 +78,39 @@ void task1()
           Serial.print(" segundos\n");
           Serial.print("Buena suerte...\n");
           task1State = Task1States::TRY;
-         
+          break;
         }
+      }
+      break;   
+    }
 
-
+    case Task1States :: TRY :{
+      for (int i = TimeToExplode; i > 0; --i) 
+      {
+      Serial.print("Tiempo restante: ");
+      Serial.print(i);
+      Serial.println(" Segundos");
+      delay(1000);
+      if(i == 1){
+        task1State = Task1States:: EXPLODE;
+        }
       }
 
 
 
-               
+      /*if (Serial.available() > 0) {
+        char UserCode = Serial.read();
+        
+        
+        }*/
+        break;
+  
     }
 
-    case Task1States :: TRY :{
-
-      if (Serial.available() > 0) {
-        char UserCode = Serial.read();
-        Serial.print(UserCode);
-        
-        }
-    
-
-      
-
-  
-  }
-
-
-
-    
+    case Task1States :: EXPLODE :{
+      Serial.print("RADIACION NUCLEAR ACTIVA, SE TE VAN A CAER LOS WEBOS\n");
+    }
   } 
-  
 }
 
 void setup(){
