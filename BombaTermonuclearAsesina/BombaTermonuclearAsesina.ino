@@ -2,7 +2,7 @@
 
 //Variables Globales
 uint32_t TimeToExplode = 5;
-char Clave[5];
+char Clave = 'C1234';
 
 
 void task1()
@@ -11,7 +11,8 @@ void task1()
     INIT,
     CONFIG,
     TRY,
-    EXPLODE
+    EXPLODE,
+    DISARM
   };
   static Task1States task1State = Task1States:: INIT;
 
@@ -85,36 +86,60 @@ void task1()
     }
 
     case Task1States :: TRY :{
+
+      //TIMER
       for (int i = TimeToExplode; i > 0; --i) 
       {
       Serial.print("Tiempo restante: ");
       Serial.print(i);
       Serial.println(" Segundos");
       delay(1000);
+
+      //Clave
+        if (Serial.available() > 0) {
+        char UserCode = Serial.read();
+
+        if (UserCode == Clave){
+          Serial.print("Nice\n");
+          task1State = Task1States:: DISARM;
+          break;
+          }
+        
+        }
+
+      //BOOM
       if(i == 1){
         task1State = Task1States:: EXPLODE;
         }
       }
-
-
-
-      /*if (Serial.available() > 0) {
-        char UserCode = Serial.read();
-        
-        
-        }*/
         break;
   
     }
 
     case Task1States :: EXPLODE :{
       Serial.print("RADIACION NUCLEAR ACTIVA, SE TE VAN A CAER LOS WEBOS\n");
+      static uint32_t previousTime = 0;
+      static bool ledState = true;
+
+      uint32_t currentTime = millis();
+
+      if( (currentTime - previousTime) > 100){
+        previousTime = currentTime;
+         ledState = !ledState;
+          digitalWrite(LED_BUILTIN, ledState);}
+          
+
+    }
+
+    case Task1States :: DISARM :{
+      Serial.print("Salvaste al mundo\n");
     }
   } 
 }
 
 void setup(){
   task1();
+  pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop(){
