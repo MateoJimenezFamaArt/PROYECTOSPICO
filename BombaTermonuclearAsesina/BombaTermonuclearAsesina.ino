@@ -21,15 +21,15 @@ void task1()
   {
     case Task1States::INIT: {
     Serial.begin(115200);
+    TimeToExplode = 5;
       Serial.print("Bienvenido agente de Disedentes del tiempo, listo para armar la bomba de emision?\n");
-      Serial.print("En este momento la bomba tiene 5 segundos de duracion, pulsa S para subir el tiempo o B para bajarlo");
+      Serial.print("En este momento la bomba tiene 5 segundos de duracion, pulsa S para subir el tiempo o B para bajarlo\n");
       Serial.print("Cuando quiera armar la bomba presione la L de listo\n");
       task1State = Task1States:: CONFIG;
        break;
     }
 
     case Task1States::CONFIG:{
-
 
       uint32_t *TimeToExplodeP;
       TimeToExplodeP = &TimeToExplode;
@@ -85,59 +85,82 @@ void task1()
       break;   
     }
 
-    case Task1States :: TRY :{
-
-      //TIMER
-      for (int i = TimeToExplode; i > 0; --i) 
+    case Task1States :: TRY :
+    {
+      uint32_t referenceTimeBombCounter = millis(); 
+      
+      while(TimeToExplode > 0)
       {
-      Serial.print("Tiempo restante: ");
-      Serial.print(i);
-      Serial.println(" Segundos");
-      delay(1000);
+       if ((millis() - referenceTimeBombCounter) >= 1000) 
+       {
+          referenceTimeBombCounter = millis();
+          TimeToExplode--;
+          Serial.print("Tiempo antes de explotar: ");
+          Serial.print(TimeToExplode);
+          Serial.println(" segundos");
+       } 
 
-      //Clave
-        if (Serial.available() > 0) {
+       if (Serial.available() > 0)
+       {
         char UserCode = Serial.read();
-
-        if (UserCode == Clave){
-          Serial.print("Nice\n");
-          task1State = Task1States:: DISARM;
+        if (UserCode == Clave)
+        {
+          Serial.print("Clave correcta ingresada desarmando bomba...\n");
+          delay(3000);
+          task1State = Task1States::DISARM;
           break;
-          }
-        
         }
+       }
 
-      //BOOM
-      if(i == 1){
-        task1State = Task1States:: EXPLODE;
-        }
+       if (TimeToExplode == 0)
+       {
+          task1State = Task1States::EXPLODE;
+          break; 
+       }
       }
         break;
-  
     }
 
-    case Task1States :: EXPLODE :{
-      Serial.print("RADIACION NUCLEAR ACTIVA, SE TE VAN A CAER LOS WEBOS\n");
+    case Task1States :: EXPLODE :
+    {
+      Serial.print("RADIACION NUCLEAR ACTIVA!!!\n");
       static uint32_t previousTime = 0;
       static bool ledState = true;
-
       uint32_t currentTime = millis();
-
       if( (currentTime - previousTime) > 100){
         previousTime = currentTime;
          ledState = !ledState;
           digitalWrite(LED_BUILTIN, ledState);}
-          
 
+         static uint32_t explosionStartTime = millis();
+         if ((currentTime - explosionStartTime) > 3000)
+          {
+          ledState = false; 
+          Serial.print("El dios del tiempo chronos ha aparecido, el mundo se ha destruido\n");
+          Serial.print("Sin embargo el te ha otorgado su bendicion y te permite volverlo a intentar\n");
+          Serial.print("No falles ahora campeon de chronos,\n ya sabes que si la sequencia quieres encontrar las palabras deberas recordar\n");
+          Serial.println("Del Cielo un gran Cometa Cae Con fuerza");
+          Serial.println("UNA vez choco con nuestro mundo");
+          Serial.println("DOS veces acabo con la vida");
+          Serial.println("TRES veces extinguio a la humanidad");
+          Serial.println("CUATRO veces lo hizo para acabar con toda la vida...\n");
+          delay(1000);
+          task1State = Task1States :: INIT;
+          }
+          break;
     }
 
     case Task1States :: DISARM :{
-      Serial.print("Salvaste al mundo\n");
+      Serial.print("Enhorabuena,salvaste al mundo!!!\n");
+      delay(2000);
+      task1State = Task1States::INIT;
+      break;
     }
   } 
 }
 
 void setup(){
+  delay(3000);
   task1();
   pinMode(LED_BUILTIN, OUTPUT);
 }
