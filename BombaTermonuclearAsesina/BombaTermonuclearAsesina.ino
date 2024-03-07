@@ -2,7 +2,15 @@
 
 //Variables Globales
 uint32_t TimeToExplode = 5;
-char Clave = 'C1234';
+
+void CleanSerialBuffer() //Codigo generico para limpiar el buffer del monitor serial
+{
+  while (Serial.available()>0)
+  {
+    char _ = Serial.read();  //Lee y descarta los datos hasta que el Serial.available este vacio
+  }  
+}
+
 
 
 void task1()
@@ -89,6 +97,8 @@ void task1()
     {
       uint32_t referenceTimeBombCounter = millis(); 
       
+      CleanSerialBuffer(); //Limpiador para el buffer Serial
+      
       while(TimeToExplode > 0)
       {
        if ((millis() - referenceTimeBombCounter) >= 1000) 
@@ -100,16 +110,23 @@ void task1()
           Serial.println(" segundos");
        } 
 
-       if (Serial.available() > 0)
+       if (Serial.available() >= 5)
        {
-        char UserCode = Serial.read();
-        if (UserCode == Clave)
+        char UserCode[6];
+        Serial.readBytes(UserCode,5);
+        UserCode[5] = '\0';
+        const char* Clave = "C1234";
+        if (strcmp(UserCode , Clave) == 0)
         {
-          Serial.print("Clave correcta ingresada desarmando bomba...\n");
-          delay(3000);
+          Serial.print("Haz ingresado el codigo correcto, la bomba se esta desarmando...\n");  
           task1State = Task1States::DISARM;
           break;
         }
+        else
+        {
+            Serial.print("Clave incorrecta, el tiempo esta corriendo...\n");
+        }
+
        }
 
        if (TimeToExplode == 0)
@@ -124,6 +141,7 @@ void task1()
     case Task1States :: EXPLODE :
     {
       Serial.print("RADIACION NUCLEAR ACTIVA!!!\n");
+      
       static uint32_t previousTime = 0;
       static bool ledState = true;
       uint32_t currentTime = millis();
@@ -135,7 +153,8 @@ void task1()
          static uint32_t explosionStartTime = millis();
          if ((currentTime - explosionStartTime) > 3000)
           {
-          ledState = false; 
+          ledState = false;
+          digitalWrite(LED_BUILTIN, ledState); 
           Serial.print("El dios del tiempo chronos ha aparecido, el mundo se ha destruido\n");
           Serial.print("Sin embargo el te ha otorgado su bendicion y te permite volverlo a intentar\n");
           Serial.print("No falles ahora campeon de chronos,\n ya sabes que si la sequencia quieres encontrar las palabras deberas recordar\n");
@@ -144,7 +163,7 @@ void task1()
           Serial.println("DOS veces acabo con la vida");
           Serial.println("TRES veces extinguio a la humanidad");
           Serial.println("CUATRO veces lo hizo para acabar con toda la vida...\n");
-          delay(1000);
+          delay(10000);
           task1State = Task1States :: INIT;
           }
           break;
